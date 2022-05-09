@@ -9,4 +9,4 @@ Single Cycle MIPS processor implemented in C
 이다.
 
 아래 데이터패스를 토대로 코드를 작성하였다.
-<img src="https://raw.githubusercontent.com/SNMac/Single-Cycle_MIPS/42ad921c014f7f55c5e4eadce06d2c57d12830c2/Single-Cycle%20MIPS.png">
+<img src="https://raw.githubusercontent.com/SNMac/Single-Cycle_MIPS/6379d1f2c70e374e5add42f8757d9e6a24cf8155/Single-Cycle%20MIPS%20Datapath.png">
