@@ -9,8 +9,8 @@ Single Cycle MIPS processor implemented in C
 이다.
 
 testbin폴더에 몇가지 테스트 bin파일이 있다.
-- simple.bin : 간단한 return 코드
-- simple2.bin : 100을 return하는 코드
+- simple.bin : 간단한 반환 코드
+- simple2.bin : 100을 반환하는 코드
 - simple3.bin : 1부터 100까지 합을 계산하여 반환하는 코드
 - simple4.bin : 재귀를 사용해서 1부터 100까지 합을 계산하여 반환하는 코드
 - gcd.bin : 0x1298과 0x9387과의 최대공약수를 계산하는 코드
