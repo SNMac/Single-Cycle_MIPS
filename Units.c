@@ -11,7 +11,8 @@ extern int Rcount;  // R-format instruction count
 extern int Icount;  // I-format instruction count
 extern int Jcount;  // J-format instruction count
 extern int Memcount;  // Memory access instruction count
-extern int Branchcount;  // taken Branch count
+extern int takenBranch;  // taken branch count
+extern int nottakenBranch;  // not taken branch count
 
 /*============================Stages============================*/
 
@@ -94,8 +95,13 @@ void WB(int32_t input1, int32_t input2, int32_t rs, uint32_t BranchAddr, uint32_
     uint32_t PCBranchMUX = MUX(PC + 4, BranchAddr, ctrlSig.PCBranch);
     uint32_t JumpMUX = MUX_3(PCBranchMUX, JumpAddr, rs, ctrlSig.Jump);
     PC = JumpMUX;
-    if (ctrlSig.PCBranch == 1) {
-        Branchcount++;
+    if (ctrlSig.Branch | ctrlSig.BranchNot) {
+        if (ctrlSig.PCBranch) {
+            takenBranch++;
+        }
+        else {
+            nottakenBranch++;
+        }
     }
     return;
 }

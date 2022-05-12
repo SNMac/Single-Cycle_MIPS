@@ -1,4 +1,5 @@
 #include "header.h"
+#include <time.h>
 
 uint32_t Memory[0x400000];
 uint32_t PC;
@@ -7,10 +8,12 @@ int Rcount;  // R-format instruction count
 int Icount;  // I-format instruction count
 int Jcount;  // J-format instruction count
 int Memcount;  // Memory access instruction count
-int Branchcount;  // taken Branch count
+int takenBranch;  // taken Branch count
+int nottakenBranch;
 
 
 int main(int argc, char* argv[]) {
+    clock_t start = clock();
   char* filename;
   if (argc == 2) {
     filename = argv[1];
@@ -68,8 +71,11 @@ int main(int argc, char* argv[]) {
   printf("# of executed I-format instructions : %d\n", Icount);
   printf("# of executed J-format instructions : %d\n", Jcount);
   printf("# of memory access instructions : %d\n", Memcount);
-  printf("# of taken branches : %d\n", Branchcount);
+  printf("# of taken branches : %d\n", takenBranch);
+  printf("# of not taken branches : %d\n", nottakenBranch);
   printf("# of clock cycles : %d\n", cycle);
   fclose(fp);
+  clock_t end = clock();
+  printf("Execution time : %lf\n", (double)(end - start) / CLOCKS_PER_SEC);
   return 0;
 }
