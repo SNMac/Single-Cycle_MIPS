@@ -43,7 +43,7 @@ void ID(uint32_t instruction, uint32_t PCadd4) {
     ALUCtrlUnit(inst.funct);
 
     int32_t signimm = (int16_t) inst.imm;
-    uint32_t zeroimm = inst.imm;
+    uint32_t zeroimm = (uint16_t) inst.imm;
     uint32_t extimm = MUX(signimm, zeroimm, ctrlSig.SignZero);
 
     // Register Fetch

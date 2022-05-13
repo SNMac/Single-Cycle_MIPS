@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     filename = argv[1];
   }
   else {
-    filename = "Simple.bin";
+    filename = "gcd.bin";
   }
   
   FILE* fp = fopen(filename, "rb");
