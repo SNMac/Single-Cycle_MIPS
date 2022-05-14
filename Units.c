@@ -1,18 +1,14 @@
 #include "header.h"
 
+
 CONTROL_SIGNAL ctrlSig;
 ALU_CONTROL_SIGNAL ALUctrlSig;
 INSTRUCTION inst;
 
+extern COUNTING counting;
 extern uint32_t Memory[0x400000];
 extern uint32_t PC;
 extern int32_t R[32];
-extern int Rcount;  // R-format instruction count
-extern int Icount;  // I-format instruction count
-extern int Jcount;  // J-format instruction count
-extern int Memcount;  // Memory access instruction count
-extern int takenBranch;  // taken branch count
-extern int nottakenBranch;  // not taken branch count
 
 /*============================Stages============================*/
 
@@ -97,10 +93,10 @@ void WB(int32_t input1, int32_t input2, int32_t rs, uint32_t BranchAddr, uint32_
     PC = JumpMUX;
     if (ctrlSig.Branch | ctrlSig.BranchNot) {
         if (ctrlSig.PCBranch) {
-            takenBranch++;
+            counting.takenBranch++;
         }
         else {
-            nottakenBranch++;
+            counting.nottakenBranch++;
         }
     }
     return;
@@ -145,7 +141,7 @@ int32_t DataMem(uint32_t Addr, int32_t Writedata) {
         }
         Readdata = Memory[Addr / 4];  // Memory read port return load value
         printf("Memory[0x%08x] load -> 0x%x (%d)\n", Addr, Memory[Addr / 4], Memory[Addr / 4]);
-        Memcount++;
+        counting.Memcount++;
     }
     else if (ctrlSig.MemRead == 0 && ctrlSig.MemWrite == 1) {  // MemRead De-asserted, MemWrite asserted
         if (Addr > 0x1000000) {  // loading outside of memory
@@ -154,7 +150,7 @@ int32_t DataMem(uint32_t Addr, int32_t Writedata) {
         }
         Memory[Addr / 4] = Writedata;  // Memory write enabled
         printf("Memory[0x%08x] <- store 0x%x (%d)\n", Addr, Memory[Addr / 4], Memory[Addr / 4]);
-        Memcount++;
+        counting.Memcount++;
     }
     return Readdata;
 }
@@ -268,7 +264,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
     memset(&ctrlSig, 0, sizeof(CONTROL_SIGNAL));
     switch (opcode) {  // considered don't care as 0
         case 0x0 :  // R-format
-            Rcount++;
+            counting.format = 'R';
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 1;  // Write register = rd
             ctrlSig.ALUSrc = 0;  // ALU input2 = rt
             ctrlSig.MemtoReg[1] = 0; ctrlSig.MemtoReg[0] = 0;  // Write data = ALU result
@@ -293,7 +289,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x8 :  // addi
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   addi $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -309,7 +305,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x9 :  // addiu
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   addiu $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -325,7 +321,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0xc :  // andi
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   andi $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -341,7 +337,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x4 :  // beq
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   beq $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.ALUSrc = 0;
             ctrlSig.RegWrite = 0;
@@ -354,7 +350,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x5 :  // bne
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   bne $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.ALUSrc = 0;
             ctrlSig.RegWrite = 0;
@@ -367,7 +363,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x2 :  // j
-            Jcount++;
+            counting.format = 'J';
             printf("format : J   |   j 0x%08x\n", inst.address);
             ctrlSig.RegWrite = 0;
             ctrlSig.MemRead = 0;
@@ -379,7 +375,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x3 :  // jal
-            Jcount++;
+            counting.format = 'J';
             printf("format : J   |   jal 0x%08x\n", inst.address);
             ctrlSig.RegWrite = 1;
             ctrlSig.RegDst[1] = 1; ctrlSig.RegDst[0] = 0;
@@ -389,7 +385,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
         
         case 0xf :  // lui
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   lui $%d, 0x%x\n", inst.rt, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -404,7 +400,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x23 :  // lw
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   lw $%d, 0x%x($%d)\n", inst.rt, inst.imm, inst.rs);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -420,7 +416,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0xd :  // ori
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   ori $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -436,7 +432,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0xa :  // slti
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   slti $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -452,7 +448,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0xb :  // sltiu
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   sltiu $%d, $%d, 0x%x\n", inst.rt, inst.rs, inst.imm);
             ctrlSig.RegDst[1] = 0; ctrlSig.RegDst[0] = 0;
             ctrlSig.ALUSrc = 1;
@@ -468,7 +464,7 @@ void CtrlUnit(uint8_t opcode, uint8_t funct) {
             break;
 
         case 0x2B :  // sw
-            Icount++;
+            counting.format = 'I';
             printf("format : I   |   sw $%d, 0x%x($%d)\n", inst.rt, inst.imm, inst.rs);
             ctrlSig.ALUSrc = 1; 
             ctrlSig.RegWrite = 0;

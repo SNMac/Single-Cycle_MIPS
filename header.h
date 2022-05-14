@@ -7,6 +7,17 @@
 #include <inttypes.h>
 #include <limits.h>
 
+typedef struct _COUNTING {
+    int cycle;
+    char format;
+    int Rcount;  // R-format instruction count
+    int Icount;  // I-format instruction count
+    int Jcount;  // J-format instruction count
+    int Memcount;  // Memory access instruction count
+    int takenBranch;  // taken Branch count
+    int nottakenBranch;  // not taken Branch count
+}COUNTING;
+
 typedef struct _CONTROL_SIGNAL {  // Control signals
 	bool PCBranch, ALUSrc, RegWrite, MemRead, MemWrite, Branch, BranchNot,
          Zero, Shift, Jump[2], RegDst[2], MemtoReg[2], SignZero;

@@ -4,13 +4,8 @@
 uint32_t Memory[0x400000];
 uint32_t PC;
 int32_t R[32];
-int Rcount;  // R-format instruction count
-int Icount;  // I-format instruction count
-int Jcount;  // J-format instruction count
-int Memcount;  // Memory access instruction count
-int takenBranch;  // taken Branch count
-int nottakenBranch;
 
+COUNTING counting;
 
 int main(int argc, char* argv[]) {
     clock_t start = clock();
@@ -19,7 +14,7 @@ int main(int argc, char* argv[]) {
         filename = argv[1];
     }
     else {
-        filename = "fib_jalr.bin";
+        filename = "Simple4.bin";
     }
   
     FILE* fp = fopen(filename, "rb");
@@ -39,7 +34,6 @@ int main(int argc, char* argv[]) {
         index++;
     }
   
-    int cycle = 0;  // to count clock cycle
     for (int i = 0; i < index; i++) {
         printf("Memory [%d] : 0x%08x\n", i, Memory[i]);
     }
@@ -47,7 +41,7 @@ int main(int argc, char* argv[]) {
     R[31] = 0xFFFFFFFF;  // $ra = 0xFFFFFFFF
     R[29] = 0x1000000;  // $sp = 0x1000000
     while(PC != 0xffffffff && index != 0) {
-        cycle++;
+        counting.cycle++;
         if (PC > (index - 1) * 4) {  // Exception : PC points over the end of instruction
         fprintf(stderr, "\nERROR: PC points over the end of instructions\n");
         exit(EXIT_FAILURE);
@@ -55,6 +49,24 @@ int main(int argc, char* argv[]) {
 
         /* Instruction Fetch */
         IF(PC);
+
+        switch (counting.format) {
+            case 'R' :
+                counting.Rcount++;
+                break;
+
+            case 'I' :
+                counting.Icount++;
+                break;
+
+            case 'J' :
+                counting.Jcount++;
+                break;
+
+            default :
+                fprintf(stderr, "ERROR: Instruction has wrong format.\n");
+                exit(EXIT_FAILURE);
+        }
         printf("\n======================================\n");
     }
     printf("======================================\n");
@@ -66,14 +78,14 @@ int main(int argc, char* argv[]) {
     }
     printf("\n");
     printf("\nFinal return value R[2] = %d\n", R[2]);
-    printf("# of executed instructions : %d\n", Rcount + Icount + Jcount);
-    printf("# of executed R-format instructions : %d\n", Rcount);
-    printf("# of executed I-format instructions : %d\n", Icount);
-    printf("# of executed J-format instructions : %d\n", Jcount);
-    printf("# of memory access instructions : %d\n", Memcount);
-    printf("# of taken branches : %d\n", takenBranch);
-    printf("# of not taken branches : %d\n", nottakenBranch);
-    printf("# of clock cycles : %d\n", cycle);
+    printf("# of executed instructions : %d\n", counting.Rcount + counting.Icount + counting.Jcount);
+    printf("# of executed R-format instructions : %d\n", counting.Rcount);
+    printf("# of executed I-format instructions : %d\n", counting.Icount);
+    printf("# of executed J-format instructions : %d\n", counting.Jcount);
+    printf("# of memory access instructions : %d\n", counting.Memcount);
+    printf("# of taken branches : %d\n", counting.takenBranch);
+    printf("# of not taken branches : %d\n", counting.nottakenBranch);
+    printf("# of clock cycles : %d\n", counting.cycle);
     fclose(fp);
     clock_t end = clock();
     printf("Execution time : %lf\n", (double)(end - start) / CLOCKS_PER_SEC);
